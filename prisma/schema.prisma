@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ChatUser {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  email     String?  @unique
+  messages  Message[]
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  senderId  String
+  sender    ChatUser @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String
+  timestamp DateTime @default(now())
+
+  @@index([senderId]) 
+}

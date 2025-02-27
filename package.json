@@ -1,0 +1,34 @@
+{
+  "name": "web-socket",
+  "version": "1.0.0",
+  "description": "web socket using telegram bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --exec babel-node src/index.js --watch",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && babel src -d dist",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "Mprooy",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql": "^2.18.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "prisma": "^6.4.1",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.26.9",
+    "@babel/node": "^7.26.0",
+    "@babel/plugin-transform-runtime": "^7.26.9",
+    "@babel/preset-env": "^7.26.9"
+  }
+}
