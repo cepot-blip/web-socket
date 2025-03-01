@@ -1,13 +1,16 @@
 import express from "express";
 import { createServer } from "http";
-import { setupSocket } from "./services/socketHandler.js";
-import { PORT } from "./config/env.js";
+import { CONFIG } from "./config/envConfig.js";
+import { setupSocket } from "./config/socketConfig.js";
+import { setupChatHandlers } from "./services/chatService.js";
+import "./services/telegramBotService.js";
 
 const app = express();
 const server = createServer(app);
+export const io = setupSocket(server);
 
-setupSocket(server);
+setupChatHandlers(io);
 
-server.listen(PORT, () => {
-  console.log(`🚀 WebSocket server berjalan di port ${PORT}`);
+server.listen(CONFIG.PORT, () => {
+  console.log(`🚀 WebSocket server berjalan di port ${CONFIG.PORT}`);
 });

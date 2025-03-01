@@ -1,16 +1,12 @@
-import { Server } from "socket.io";
-import { prisma } from "../config/prisma.js";
-import { sendMessageToCS } from "./telegramBot.js";
+import { users } from "../store/userStore.js";
+import { bot } from "../services/telegramBotService.js";
+import { CHAT_ID_CS } from "../config/envConfig.js";
+import { PrismaClient } from "@prisma/client";
 
-const users = new Map();
+const prisma = new PrismaClient();
 
-export const setupSocket = (server) => {
-  const io = new Server(server, {
-    cors: { origin: "*" },
-  });
-
+export const handleSocketConnection = (io) => {
   io.on("connection", (socket) => {
-    console.log("✅ User connected:", socket.id);
 
     socket.on("register_user", async (userData) => {
       if (!userData.name || !userData.phone) {
@@ -33,7 +29,7 @@ export const setupSocket = (server) => {
         }
 
         users.set(socket.id, user);
-        socket.join(user.name);
+        socket.join(user.id);
         socket.emit("registered", { success: true, user });
       } catch (error) {
         socket.emit("error", { message: "Gagal menyimpan user!" });
@@ -45,21 +41,19 @@ export const setupSocket = (server) => {
       if (!user) {
         return socket.emit("error", { message: "User tidak terdaftar!" });
       }
-
       if (!data.text || data.text.trim() === "") {
         return socket.emit("error", { message: "Pesan tidak boleh kosong!" });
       }
 
-      console.log("📩 Pesan dari user:", data);
-      const now = new Date();
-      const formattedTime = now.toLocaleTimeString("id-ID", {
+      const formattedTime = new Date().toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
       });
 
       try {
-        await sendMessageToCS(
+        await bot.sendMessage(
+          CHAT_ID_CS,
           `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
         );
 
@@ -67,36 +61,37 @@ export const setupSocket = (server) => {
           data: {
             senderId: user.id,
             content: data.text.trim(),
-            timestamp: now.toISOString(),
+            timestamp: new Date().toISOString(),
           },
         });
 
-        io.to(user.name).emit("receive_message", {
+        console.log("📤 Mengirim pesan ke CS:", {
+          sender: user.name,
+          text: data.text.trim(),
+          timestamp: formattedTime,
+        });
+
+        io.to("cs_room").emit("receive_message", {
           sender: user.name,
           text: data.text.trim(),
           timestamp: formattedTime,
         });
       } catch (error) {
+        console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
       }
-    });
-
-    socket.on("end_chat", async () => {
-      const user = users.get(socket.id);
-      if (!user)
-        return socket.emit("error", { message: "User tidak ditemukan!" });
-
-      users.delete(socket.id);
-      socket.leave(user.name);
-      socket.emit("chat_ended", { message: "Chat telah diakhiri oleh Anda." });
-
-      await sendMessageToCS(`⚠️ ${user.name} telah mengakhiri chat.`);
-      console.log(`🚫 Chat user ${user.name} berakhir.`);
     });
 
     socket.on("disconnect", () => {
       users.delete(socket.id);
       console.log("❌ User disconnected:", socket.id);
+    });
+  });
+
+  io.on("connection", (socket) => {
+    socket.on("register_cs", () => {
+      socket.join("cs_room");
+      console.log("✅ CS terdaftar:", socket.id);
     });
   });
 };
