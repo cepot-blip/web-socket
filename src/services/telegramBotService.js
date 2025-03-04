@@ -6,58 +6,48 @@ const activeChats = new Map();
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  const text = msg.text || "";
-
   if (chatId !== CONFIG.CHAT_ID_CS) return;
+
+  if (!msg.text) return;
+
+  const text = msg.text.trim();
 
   if (text.startsWith("/endchat")) {
     const nameRegex = /^\/endchat\s+@([\w\s]+)$/;
     const match = text.match(nameRegex);
 
-    if (!match) {
+    const userName = match[1].trim().toLowerCase();
+
+    if (!activeChats.has(userName)) {
       bot.sendMessage(
         CONFIG.CHAT_ID_CS,
-        "❌ Format salah! Gunakan: `/endchat @username`"
+        `❌ Tidak ditemukan chat aktif dengan @${userName}`
       );
       return;
     }
 
-    const userName = match[1].trim().toLowerCase();
-    let userFound = false;
+    const socketId = activeChats.get(userName);
+    const socket = io.sockets.sockets.get(socketId);
 
-    for (const [socketId, socket] of io.sockets.sockets) {
-      const user = socket.data?.user;
-      if (!user) continue;
+    if (socket) {
+      io.to(socketId).emit("chat_ended", {
+        message: "🔴 Chat telah diakhiri oleh CS.",
+      });
 
-      console.log(`Checking socket: ${socketId}, user:`, user);
-
-      if (user.name.toLowerCase() === userName) {
-        activeChats.delete(userName);
-
-        io.to(socketId).emit("chat_ended", {
-          message: "🔴 Chat telah diakhiri oleh CS.",
-        });
-
-        bot.sendMessage(
-          CONFIG.CHAT_ID_CS,
-          `✅ Chat dengan @${userName} telah diakhiri.`
-        );
-
-        setTimeout(() => {
-          socket.disconnect();
-        }, 500); // Delay sebelum disconnect
-
-        userFound = true;
-        break;
-      }
-    }
-
-    if (!userFound) {
       bot.sendMessage(
         CONFIG.CHAT_ID_CS,
-        `❌ Tidak ditemukan user dengan nama @${userName}`
+        `✅ Chat dengan @${userName} telah diakhiri.`
       );
+
+      setTimeout(() => {
+        if (socket.connected) {
+          socket.disconnect();
+        }
+      }, 500);
     }
+
+    activeChats.delete(userName);
+    return;
   }
 
   const nameRegex = /^@([\w\s]+?)\s+(.+)/;
@@ -73,6 +63,8 @@ bot.on("message", async (msg) => {
 
   const userName = match[1].trim().toLowerCase();
   const messageContent = match[2];
+
+  let userFound = false;
 
   for (const [socketId, socket] of io.sockets.sockets) {
     const user = socket.data?.user;
@@ -91,15 +83,16 @@ bot.on("message", async (msg) => {
 
       bot.sendMessage(CONFIG.CHAT_ID_CS, `✅ Pesan terkirim ke @${userName}`);
       activeChats.set(userName, socketId);
-      return;
+      userFound = true;
+      break;
     }
   }
 
-  bot.sendMessage(CONFIG.CHAT_ID_CS, `❌ Gagal menemukan user @${userName}`);
+  if (!userFound) {
+    bot.sendMessage(CONFIG.CHAT_ID_CS, `❌ Gagal menemukan user @${userName}`);
+  }
+});
 
-
-
-  bot.on("error", (error) => {
-    console.error("❌ Bot Error:", error.message);
-  });
+bot.on("error", (error) => {
+  console.error("❌ Bot Error:", error.message);
 });
