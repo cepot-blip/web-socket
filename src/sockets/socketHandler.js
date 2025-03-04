@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 
 export const handleSocketConnection = (io) => {
   io.on("connection", (socket) => {
-
     socket.on("register_user", async (userData) => {
       if (!userData.name || !userData.phone) {
         return socket.emit("error", { message: "Data user tidak lengkap!" });
@@ -34,6 +33,15 @@ export const handleSocketConnection = (io) => {
       } catch (error) {
         socket.emit("error", { message: "Gagal menyimpan user!" });
       }
+    });
+
+    io.on("connection", (socket) => {
+      socket.on("disconnect", () => {
+        const user = socket.data?.user;
+        if (user) {
+          activeChats.delete(user.name.toLowerCase());
+        }
+      });
     });
 
     socket.on("send_message", async (data) => {
@@ -84,7 +92,6 @@ export const handleSocketConnection = (io) => {
 
     socket.on("disconnect", () => {
       users.delete(socket.id);
-      console.log("❌ User disconnected:", socket.id);
     });
   });
 

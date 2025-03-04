@@ -29,8 +29,11 @@ bot.on("message", async (msg) => {
       const user = socket.data?.user;
       if (!user) continue;
 
+      console.log(`Checking socket: ${socketId}, user:`, user);
+
       if (user.name.toLowerCase() === userName) {
         activeChats.delete(userName);
+
         io.to(socketId).emit("chat_ended", {
           message: "🔴 Chat telah diakhiri oleh CS.",
         });
@@ -40,7 +43,10 @@ bot.on("message", async (msg) => {
           `✅ Chat dengan @${userName} telah diakhiri.`
         );
 
-        socket.disconnect();
+        setTimeout(() => {
+          socket.disconnect();
+        }, 500); // Delay sebelum disconnect
+
         userFound = true;
         break;
       }
@@ -52,7 +58,6 @@ bot.on("message", async (msg) => {
         `❌ Tidak ditemukan user dengan nama @${userName}`
       );
     }
-    return;
   }
 
   const nameRegex = /^@([\w\s]+?)\s+(.+)/;
@@ -91,4 +96,10 @@ bot.on("message", async (msg) => {
   }
 
   bot.sendMessage(CONFIG.CHAT_ID_CS, `❌ Gagal menemukan user @${userName}`);
+
+
+
+  bot.on("error", (error) => {
+    console.error("❌ Bot Error:", error.message);
+  });
 });

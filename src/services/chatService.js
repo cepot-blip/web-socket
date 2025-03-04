@@ -82,7 +82,11 @@ export const setupChatHandlers = (io) => {
       try {
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
+          `📩 Pesan Baru dari Pelanggan \n\n👤 Nama: ${
+            user.name
+          }\n📞 Telepon: ${user.phone}\n✉️ Email: ${
+            user.email
+          }\n💬 Pesan: ${data.text.trim()}`
         );
 
         socket.to(user.name).emit("receive_message", {
@@ -99,13 +103,18 @@ export const setupChatHandlers = (io) => {
       console.log(
         `🔴 Chat diakhiri untuk ${socket.data?.user?.name || "Unknown User"}`
       );
-      socket.emit("chat_ended", { message: "🔴 Chat telah diakhiri oleh CS." });
-      socket.disconnect();
+
+      io.to(socket.data.roomId).emit("chat_ended", {
+        message: "🔴 Chat telah diakhiri oleh CS.",
+      });
+
+      setTimeout(() => {
+        socket.disconnect();
+      }, 1000);
     });
 
     socket.on("disconnect", () => {
       users.delete(socket.id);
-      console.log("❌ User disconnected:", socket.id);
     });
   });
 };
