@@ -14,3 +14,7 @@ setupChatHandlers(io);
 server.listen(CONFIG.PORT, () => {
   console.log(`🚀 WebSocket server berjalan di port ${CONFIG.PORT}`);
 });
+
+app.get("/", (req, res) => {
+  res.send("🔥Server is running!🚀 🚀 🚀 ");
+});
