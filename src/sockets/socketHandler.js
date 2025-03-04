@@ -7,6 +7,8 @@ const prisma = new PrismaClient();
 
 export const handleSocketConnection = (io) => {
   io.on("connection", (socket) => {
+    console.log("🔌 WebSocket Connected:", socket.id);
+
     socket.on("register_user", async (userData) => {
       if (!userData.name || !userData.phone) {
         return socket.emit("error", { message: "Data user tidak lengkap!" });
@@ -35,13 +37,9 @@ export const handleSocketConnection = (io) => {
       }
     });
 
-    io.on("connection", (socket) => {
-      socket.on("disconnect", () => {
-        const user = socket.data?.user;
-        if (user) {
-          activeChats.delete(user.name.toLowerCase());
-        }
-      });
+    socket.on("register_cs", () => {
+      socket.join("cs_room");
+      console.log("✅ CS terdaftar:", socket.id);
     });
 
     socket.on("send_message", async (data) => {
@@ -91,14 +89,8 @@ export const handleSocketConnection = (io) => {
     });
 
     socket.on("disconnect", () => {
+      console.log("❌ WebSocket Disconnected:", socket.id);
       users.delete(socket.id);
-    });
-  });
-
-  io.on("connection", (socket) => {
-    socket.on("register_cs", () => {
-      socket.join("cs_room");
-      console.log("✅ CS terdaftar:", socket.id);
     });
   });
 };
