@@ -11,8 +11,8 @@ export const io = setupSocket(server);
 
 setupChatHandlers(io);
 
-server.listen(CONFIG.PORT, () => {
-  console.log(`🚀 WebSocket server berjalan di port ${CONFIG.PORT}`);
+server.listen(CONFIG.PORT, "0.0.0.0", () => {
+  console.log(`🚀 WebSocket server berjalan di 0.0.0.0:${CONFIG.PORT}`);
 });
 
 app.get("/", (req, res) => {
