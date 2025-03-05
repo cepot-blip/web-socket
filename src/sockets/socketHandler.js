@@ -1,15 +1,23 @@
 import { users } from "../store/userStore.js";
-import { bot } from "../services/telegramBotService.js";
-import { CHAT_ID_CS } from "../config/envConfig.js";
+import { CONFIG } from "../config/envConfig.js";
 import { PrismaClient } from "@prisma/client";
+import { bot } from "../config/telegramConfig.js";
 
 const prisma = new PrismaClient();
+
+console.log("🔍 Debug: CONFIG setelah dotenv.config()", CONFIG);
+console.log(
+  "✅ ENV Chat ID yang digunakan di socketHandler:",
+  CONFIG.CHAT_ID_CS
+);
 
 export const handleSocketConnection = (io) => {
   io.on("connection", (socket) => {
     console.log("🔌 WebSocket Connected:", socket.id);
 
     socket.on("register_user", async (userData) => {
+      console.log("✅ User terdaftar:", userData);
+      socket.data.user = userData;
       if (!userData.name || !userData.phone) {
         return socket.emit("error", { message: "Data user tidak lengkap!" });
       }
@@ -58,11 +66,33 @@ export const handleSocketConnection = (io) => {
       });
 
       try {
-        await bot.sendMessage(
-          CHAT_ID_CS,
+        console.log("📩 Mengirim pesan ke Telegram...");
+        console.log(
+          "Chat ID yang digunakan:",
+          CONFIG.CHAT_ID_CS,
+          "Tipe:",
+          typeof CONFIG.CHAT_ID_CS
+        );
+        console.log(
+          "Isi pesan:",
           `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
         );
 
+        if (!CONFIG.CHAT_ID_CS) {
+          console.error("❌ Error: CHAT_ID_CS tidak ditemukan! Cek file .env");
+          return socket.emit("error", {
+            message: "Server error: Chat ID tidak ditemukan",
+          });
+        }
+
+        // Kirim pesan ke Telegram
+        await bot.sendMessage(
+          CONFIG.CHAT_ID_CS,
+          `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
+        );
+        console.log("✅ Pesan berhasil dikirim!");
+
+        // Simpan pesan ke database
         await prisma.message.create({
           data: {
             senderId: user.id,
@@ -71,6 +101,7 @@ export const handleSocketConnection = (io) => {
           },
         });
 
+        // Kirim pesan ke CS
         console.log("📤 Mengirim pesan ke CS:", {
           sender: user.name,
           text: data.text.trim(),

@@ -22,47 +22,6 @@ export const setupChatHandlers = (io) => {
       socket.emit("registered", { success: true, user });
     });
 
-    socket.on("request_pre_chat", () => {
-      socket.emit("pre_chat_options", {
-        options: [
-          "Cara join mitra?",
-          "Cara join B2C?",
-          "Cara join B2B?",
-          "Softwarehouse",
-          "Hubungi CS",
-          "Kembali Ke Menu Utama",
-        ],
-      });
-    });
-
-    socket.on("pre_chat_selection", (data) => {
-      const user = users.get(socket.id);
-      if (!user) {
-        return socket.emit("error", { message: "User tidak terdaftar!" });
-      }
-
-      if (data.option === "Hubungi CS") {
-        socket.emit("chat_start", {
-          message: "Anda sekarang terhubung dengan CS.",
-        });
-      } else {
-        const responses = {
-          "Cara join mitra?":
-            "Untuk menjadi mitra, silakan daftar di website kami...",
-          "Cara join B2C?":
-            "B2C memungkinkan pelanggan membeli langsung, info lebih lanjut di website...",
-          "Cara join B2B?":
-            "B2B ditujukan untuk bisnis yang ingin bermitra dengan kami...",
-          Softwarehouse:
-            "Kami menyediakan layanan software house, detailnya di website kami...",
-        };
-        socket.emit("pre_chat_response", {
-          message:
-            responses[data.option] || "Mohon pilih pertanyaan yang tersedia.",
-        });
-      }
-    });
-
     socket.on("send_message", async (data) => {
       const user = users.get(socket.id);
       if (!user) {

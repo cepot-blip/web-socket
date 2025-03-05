@@ -1,17 +1,29 @@
 import { Server } from "socket.io";
 
+let io;
+
 export const setupSocket = (server) => {
-  const io = new Server(server, {
-    cors: { origin: "*" },
+  io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
   });
 
   io.on("connection", (socket) => {
-    console.log("🟢 Client connected:", socket.id);
+    console.log(`✅ User terhubung: ${socket.id}`);
+
+    socket.on("register", (userData) => {
+      socket.data.user = userData;
+      console.log(`👤 User terdaftar:`, userData);
+    });
 
     socket.on("disconnect", () => {
-      console.log("🔴 Client disconnected:", socket.id);
+      console.log(`❌ User terputus: ${socket.id}`);
     });
   });
 
   return io;
 };
+
+export { io };
