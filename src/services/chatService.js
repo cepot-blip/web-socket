@@ -5,6 +5,10 @@ import { CONFIG } from "../config/envConfig.js";
 const users = new Map();
 
 export const setupChatHandlers = (io) => {
+  function escapeMarkdown(text) {
+    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+  }
+
   io.on("connection", (socket) => {
     socket.on("register_user", async (userData) => {
       let user = await getUserByPhone(userData.phone);
@@ -41,12 +45,12 @@ export const setupChatHandlers = (io) => {
       try {
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 Pesan Baru dari Pelanggan \n\n` +
-            `👤 Nama: ${user.name}\n` +
-            `📞 Telepon: ${user.phone}\n` +
-            `✉️ Email: ${user.email}\n\n` +
-            `💬 Pesan: ${data.text.trim()}`,
-          { parse_mode: "Markdown" }
+          `📩 *Pesan Baru dari Pelanggan* \n\n` +
+            `👤 *Nama:* ${escapeMarkdown(user.name)}\n` +
+            `📞 *Telepon:* ${escapeMarkdown(user.phone)}\n` +
+            `✉️ *Email:* ${escapeMarkdown(user.email)}\n\n` +
+            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text.trim())}\n\`\`\``,
+          { parse_mode: "MarkdownV2" }
         );
 
         socket.to(user.name).emit("receive_message", {

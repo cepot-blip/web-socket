@@ -12,6 +12,10 @@ console.log(
 );
 
 export const handleSocketConnection = (io) => {
+  function escapeMarkdown(text) {
+    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+  }
+
   io.on("connection", (socket) => {
     console.log("🔌 WebSocket Connected:", socket.id);
 
@@ -87,12 +91,12 @@ export const handleSocketConnection = (io) => {
 
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 Pesan Baru dari Pelanggan \n\n` +
-            `👤 Nama: ${user.name}\n` +
-            `📞 Telepon: ${user.phone}\n` +
-            `✉️ Email: ${user.email}\n\n` +
-            `💬 Pesan: ${data.text.trim()}`,
-          { parse_mode: "Markdown" }
+          `📩 *Pesan Baru dari Pelanggan* \n\n` +
+            `👤 *Nama:* ${escapeMarkdown(user.name)}\n` +
+            `📞 *Telepon:* ${escapeMarkdown(user.phone)}\n` +
+            `✉️ *Email:* ${escapeMarkdown(user.email)}\n\n` +
+            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text.trim())}\n\`\`\``,
+          { parse_mode: "MarkdownV2" }
         );
 
         console.log("✅ Pesan berhasil dikirim!");
