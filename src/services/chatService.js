@@ -41,11 +41,12 @@ export const setupChatHandlers = (io) => {
       try {
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 Pesan Baru dari Pelanggan \n\n👤 Nama: ${
-            user.name
-          }\n📞 Telepon: ${user.phone}\n✉️ Email: ${
-            user.email
-          }\n💬 Pesan: ${data.text.trim()}`
+          `📩 Pesan Baru dari Pelanggan \n\n` +
+            `👤 Nama: ${user.name}\n` +
+            `📞 Telepon: ${user.phone}\n` +
+            `✉️ Email: ${user.email}\n\n` +
+            `💬 Pesan: ${data.text.trim()}`,
+          { parse_mode: "Markdown" }
         );
 
         socket.to(user.name).emit("receive_message", {

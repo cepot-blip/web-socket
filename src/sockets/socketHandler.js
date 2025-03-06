@@ -85,14 +85,12 @@ export const handleSocketConnection = (io) => {
           });
         }
 
-        // Kirim pesan ke Telegram
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
           `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
         );
         console.log("✅ Pesan berhasil dikirim!");
 
-        // Simpan pesan ke database
         await prisma.message.create({
           data: {
             senderId: user.id,
@@ -101,7 +99,6 @@ export const handleSocketConnection = (io) => {
           },
         });
 
-        // Kirim pesan ke CS
         console.log("📤 Mengirim pesan ke CS:", {
           sender: user.name,
           text: data.text.trim(),

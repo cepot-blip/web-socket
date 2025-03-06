@@ -1,7 +1,6 @@
 import { bot } from "../config/telegramConfig.js";
 import { CONFIG } from "../config/envConfig.js";
-import { io } from "../config/socketConfig.js"; // Pastikan `io` diekspor dari `socketConfig.js`
-
+import { io } from "../config/socketConfig.js";
 const activeChats = new Map();
 
 bot.on("message", async (msg) => {
