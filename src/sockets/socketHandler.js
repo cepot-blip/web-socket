@@ -87,8 +87,14 @@ export const handleSocketConnection = (io) => {
 
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
+          `📩 Pesan Baru dari Pelanggan \n\n` +
+            `👤 Nama: ${user.name}\n` +
+            `📞 Telepon: ${user.phone}\n` +
+            `✉️ Email: ${user.email}\n\n` +
+            `💬 Pesan: ${data.text.trim()}`,
+          { parse_mode: "Markdown" }
         );
+
         console.log("✅ Pesan berhasil dikirim!");
 
         await prisma.message.create({
