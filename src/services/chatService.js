@@ -6,7 +6,9 @@ const users = new Map();
 
 export const setupChatHandlers = (io) => {
   function escapeMarkdown(text) {
-    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+    return text
+      .replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1")
+      .replace(/\n/g, "\\n");
   }
 
   io.on("connection", (socket) => {
@@ -45,11 +47,11 @@ export const setupChatHandlers = (io) => {
       try {
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 *Pesan Baru dari Pelanggan* \n\n` +
-            `👤 *Nama:* ${escapeMarkdown(user.name)}\n` +
-            `📞 *Telepon:* ${escapeMarkdown(user.phone)}\n` +
-            `✉️ *Email:* ${escapeMarkdown(user.email)}\n\n` +
-            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text.trim())}\n\`\`\``,
+          `📩 *Pesan Baru dari Pelanggan*\n\n` +
+            `👤 *Nama:* \`${escapeMarkdown(user.name)}\`\n` +
+            `📞 *Telepon:* \`${escapeMarkdown(user.phone)}\`\n` +
+            `✉️ *Email:* \`${escapeMarkdown(user.email)}\`\n\n` +
+            `💬 *Pesan:*\n\`\`\`${escapeMarkdown(data.text.trim())}\`\`\``,
           { parse_mode: "MarkdownV2" }
         );
 

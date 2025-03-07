@@ -5,22 +5,15 @@ import { bot } from "../config/telegramConfig.js";
 
 const prisma = new PrismaClient();
 
-console.log("🔍 Debug: CONFIG setelah dotenv.config()", CONFIG);
-console.log(
-  "✅ ENV Chat ID yang digunakan di socketHandler:",
-  CONFIG.CHAT_ID_CS
-);
-
 export const handleSocketConnection = (io) => {
   function escapeMarkdown(text) {
-    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+    return text
+      .replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1")
+      .replace(/\n/g, "\\n");
   }
 
   io.on("connection", (socket) => {
-    console.log("🔌 WebSocket Connected:", socket.id);
-
     socket.on("register_user", async (userData) => {
-      console.log("✅ User terdaftar:", userData);
       socket.data.user = userData;
       if (!userData.name || !userData.phone) {
         return socket.emit("error", { message: "Data user tidak lengkap!" });
@@ -51,7 +44,6 @@ export const handleSocketConnection = (io) => {
 
     socket.on("register_cs", () => {
       socket.join("cs_room");
-      console.log("✅ CS terdaftar:", socket.id);
     });
 
     socket.on("send_message", async (data) => {
@@ -70,18 +62,6 @@ export const handleSocketConnection = (io) => {
       });
 
       try {
-        console.log("📩 Mengirim pesan ke Telegram...");
-        console.log(
-          "Chat ID yang digunakan:",
-          CONFIG.CHAT_ID_CS,
-          "Tipe:",
-          typeof CONFIG.CHAT_ID_CS
-        );
-        console.log(
-          "Isi pesan:",
-          `👤 ${user.name} (${user.phone})\n💬 ${data.text.trim()}`
-        );
-
         if (!CONFIG.CHAT_ID_CS) {
           console.error("❌ Error: CHAT_ID_CS tidak ditemukan! Cek file .env");
           return socket.emit("error", {
@@ -91,14 +71,13 @@ export const handleSocketConnection = (io) => {
 
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 *Pesan Baru dari Pelanggan* \n\n` +
-            `👤 *Nama:* ${escapeMarkdown(user.name)}\n` +
-            `📞 *Telepon:* ${escapeMarkdown(user.phone)}\n` +
-            `✉️ *Email:* ${escapeMarkdown(user.email)}\n\n` +
-            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text.trim())}\n\`\`\``,
+          `📩 *Pesan Baru dari Pelanggan*\n\n` +
+            `👤 *Nama:* \`${escapeMarkdown(user.name)}\`\n` +
+            `📞 *Telepon:* \`${escapeMarkdown(user.phone)}\`\n` +
+            `✉️ *Email:* \`${escapeMarkdown(user.email)}\`\n\n` +
+            `💬 *Pesan:*\n\`\`\`${escapeMarkdown(data.text.trim())}\`\`\``,
           { parse_mode: "MarkdownV2" }
         );
-
         console.log("✅ Pesan berhasil dikirim!");
 
         await prisma.message.create({

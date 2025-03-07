@@ -8,6 +8,3 @@ export const CONFIG = {
 };
 
 export const CHAT_ID_CS = process.env.CHAT_ID_CS;
-
-console.log("🔍 Debug: CONFIG setelah dotenv.config()", CONFIG);
-console.log("✅ ENV Chat ID:", process.env.CHAT_ID_CS);
