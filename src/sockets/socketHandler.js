@@ -69,7 +69,10 @@ export const handleSocketConnection = (io) => {
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
             `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<pre>${data.text}</pre>`,
+            `💬 <b>Pesan:</b>\n<code>${data.text.replace(
+              /\n/g,
+              "&#10;"
+            )}</code>`,
           { parse_mode: "HTML" }
         );
 
