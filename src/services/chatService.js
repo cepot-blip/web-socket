@@ -69,7 +69,7 @@ export const setupChatHandlers = (io) => {
             `👤 *Nama:* \`${escapeMarkdown(user.name)}\`\n` +
             `📞 *Telepon:* \`${escapeMarkdown(user.phone)}\`\n` +
             `✉️ *Email:* \`${escapeMarkdown(user.email)}\`\n\n` +
-            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text.trim())}\n\`\`\``,
+            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text)}\n\`\`\``,
           { parse_mode: "MarkdownV2" }
         );
 

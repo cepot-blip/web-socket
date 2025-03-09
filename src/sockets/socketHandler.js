@@ -9,6 +9,24 @@ export const handleSocketConnection = (io) => {
   function escapeMarkdown(text) {
     return text
       .replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1")
+      .replace(/_/g, "\\_")
+      .replace(/\*/g, "\\*")
+      .replace(/\[/g, "\\[")
+      .replace(/\]/g, "\\]")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)")
+      .replace(/~/g, "\\~")
+      .replace(/`/g, "\\`")
+      .replace(/>/g, "\\>")
+      .replace(/#/g, "\\#")
+      .replace(/\+/g, "\\+")
+      .replace(/-/g, "\\-")
+      .replace(/=/g, "\\=")
+      .replace(/\|/g, "\\|")
+      .replace(/\{/g, "\\{")
+      .replace(/\}/g, "\\}")
+      .replace(/\./g, "\\.")
+      .replace(/!/g, "\\!")
       .replace(/\n/g, "\\n");
   }
 
@@ -75,10 +93,9 @@ export const handleSocketConnection = (io) => {
             `👤 *Nama:* \`${escapeMarkdown(user.name)}\`\n` +
             `📞 *Telepon:* \`${escapeMarkdown(user.phone)}\`\n` +
             `✉️ *Email:* \`${escapeMarkdown(user.email)}\`\n\n` +
-            `💬 *Pesan:*\n\`\`\`${escapeMarkdown(data.text.trim())}\`\`\``,
+            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text)}\n\`\`\``,
           { parse_mode: "MarkdownV2" }
         );
-        console.log("✅ Pesan berhasil dikirim!");
 
         await prisma.message.create({
           data: {
