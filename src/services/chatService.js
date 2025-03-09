@@ -5,30 +5,6 @@ import { CONFIG } from "../config/envConfig.js";
 const users = new Map();
 
 export const setupChatHandlers = (io) => {
-  function escapeMarkdown(text) {
-    return text
-      .replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1")
-      .replace(/_/g, "\\_")
-      .replace(/\*/g, "\\*")
-      .replace(/\[/g, "\\[")
-      .replace(/\]/g, "\\]")
-      .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)")
-      .replace(/~/g, "\\~")
-      .replace(/`/g, "\\`")
-      .replace(/>/g, "\\>")
-      .replace(/#/g, "\\#")
-      .replace(/\+/g, "\\+")
-      .replace(/-/g, "\\-")
-      .replace(/=/g, "\\=")
-      .replace(/\|/g, "\\|")
-      .replace(/\{/g, "\\{")
-      .replace(/\}/g, "\\}")
-      .replace(/\./g, "\\.")
-      .replace(/!/g, "\\!")
-      .replace(/\n/g, "\\n");
-  }
-
   io.on("connection", (socket) => {
     socket.on("register_user", async (userData) => {
       let user = await getUserByPhone(userData.phone);
@@ -65,12 +41,16 @@ export const setupChatHandlers = (io) => {
       try {
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
-          `📩 *Pesan Baru dari Pelanggan*\n\n` +
-            `👤 *Nama:* \`${escapeMarkdown(user.name)}\`\n` +
-            `📞 *Telepon:* \`${escapeMarkdown(user.phone)}\`\n` +
-            `✉️ *Email:* \`${escapeMarkdown(user.email)}\`\n\n` +
-            `💬 *Pesan:*\n\`\`\`\n${escapeMarkdown(data.text)}\n\`\`\``,
-          { parse_mode: "MarkdownV2" }
+          `📩 <b>Pesan Baru dari Pelanggan</b>\n\n` +
+            `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
+            `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
+            `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
+            `💬 <b>Pesan:</b>\n<pre>${data.text}</pre>`,
+          { parse_mode: "HTML" }
+        );
+        console.log(
+          "Pesan sebelum dikirim ke Telegram:",
+          JSON.stringify(data.text)
         );
 
         socket.to(user.name).emit("receive_message", {
