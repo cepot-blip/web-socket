@@ -39,12 +39,21 @@ export const setupChatHandlers = (io) => {
       });
 
       try {
+        if (!CONFIG.CHAT_ID_CS) {
+          console.error("❌ Error: CHAT_ID_CS tidak ditemukan! Cek file .env");
+          return socket.emit("error", {
+            message: "Server error: Chat ID tidak ditemukan",
+          });
+        }
+
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
           `📩 <b>Pesan Baru dari Pelanggan</b>\n\n` +
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
-            `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
+            `✉️ <b>Email:</b> <code>${
+              user.email || "Tidak tersedia"
+            }</code>\n\n` +
             `💬 <b>Pesan:</b>\n<code>${data.text.replace(
               /\n/g,
               "&#10;"
@@ -57,12 +66,13 @@ export const setupChatHandlers = (io) => {
           JSON.stringify(data.text)
         );
 
-        socket.to(user.name).emit("receive_message", {
+        io.to(user.name).emit("receive_message", {
           sender: user.name,
-          text: data.text.trim(),
+          text: data.text.replace(/\n/g, "\\n"),
           timestamp: formattedTime,
         });
       } catch (error) {
+        console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
       }
     });
@@ -72,7 +82,7 @@ export const setupChatHandlers = (io) => {
         `🔴 Chat diakhiri untuk ${socket.data?.user?.name || "Unknown User"}`
       );
 
-      io.to(socket.data.roomId).emit("chat_ended", {
+      io.to(socket.data.user?.name).emit("chat_ended", {
         message: "🔴 Chat telah diakhiri oleh CS.",
       });
 
@@ -82,6 +92,7 @@ export const setupChatHandlers = (io) => {
     });
 
     socket.on("disconnect", () => {
+      console.log("❌ WebSocket Disconnected:", socket.id);
       users.delete(socket.id);
     });
   });

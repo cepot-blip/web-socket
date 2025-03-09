@@ -84,20 +84,20 @@ export const handleSocketConnection = (io) => {
         await prisma.message.create({
           data: {
             senderId: user.id,
-            content: data.text.trim(),
+            content: data.text,
             timestamp: new Date().toISOString(),
           },
         });
 
         console.log("📤 Mengirim pesan ke CS:", {
           sender: user.name,
-          text: data.text.trim(),
+          text: JSON.stringify(data.text),
           timestamp: formattedTime,
         });
 
         io.to("cs_room").emit("receive_message", {
           sender: user.name,
-          text: data.text.trim(),
+          text: data.text.replace(/\n/g, "\\n"),
           timestamp: formattedTime,
         });
       } catch (error) {
