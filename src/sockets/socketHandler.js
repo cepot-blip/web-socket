@@ -122,20 +122,12 @@ export const handleSocketConnection = (io) => {
 
         const [userSocketId, userInfo] = userSocket;
 
-        const messageText = data.text.replace(/^@\w+\s*/, "");
-        const formattedText = messageText
-          .replace(/\r\n/g, "\n")
-          .replace(/\r/g, "\n");
+        console.log("🔄 Mencari user:", userSocketId, "Nama:", userInfo.name);
 
-        await bot.sendMessage(
-          CONFIG.CHAT_ID_CS,
-          `@${userInfo.name} ${formattedText}`,
-          { parse_mode: "MarkdownV2" }
-        );
-
+        const messageText = data.text.replace(/^@\w+\s*/, "").trim();
         const formattedMessage = {
-          sender: "CS",
-          text: formattedText,
+          sender: "Customer Service",
+          text: messageText,
           timestamp: new Date().toLocaleTimeString("id-ID", {
             hour: "2-digit",
             minute: "2-digit",
@@ -143,7 +135,7 @@ export const handleSocketConnection = (io) => {
           }),
         };
 
-        console.log("📤 Pesan dari CS ke user:", formattedMessage);
+        console.log("📤 Mengirim pesan dari CS ke user:", formattedMessage);
 
         io.to(userSocketId).emit("receive_message", formattedMessage);
       } catch (error) {
