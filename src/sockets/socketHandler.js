@@ -81,7 +81,15 @@ export const handleSocketConnection = (io) => {
           },
         });
 
-        io.to("cs_room").emit("receive_message", {
+        const formattedMessage = {
+          sender: user.name,
+          text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
+          timestamp: formattedTime,
+        };
+
+        console.log("📤 Mengirim pesan ke CS:", JSON.stringify(formattedMessage, null, 2));
+
+        io.to("cs_room").emit("receive_message", formattedMessage, {
           sender: user.name,
           text: data.text,
           timestamp: formattedTime,
