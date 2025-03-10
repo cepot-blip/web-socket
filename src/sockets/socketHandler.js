@@ -92,18 +92,52 @@ export const handleSocketConnection = (io) => {
           JSON.stringify(formattedMessage, null, 2)
         );
 
-        io.to("cs_room").emit(
-          "receive_message",
-          JSON.stringify(formattedMessage),
-          {
-            sender: user.name,
-            text: data.text,
-            timestamp: formattedTime,
-          }
-        );
+        io.to("cs_room").emit("receive_message", formattedMessage);
       } catch (error) {
         console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
+      }
+    });
+
+    // ✅ Perbaikan: Menangani pesan dari CS ke user dengan multiline
+    socket.on("cs_send_message", async (data) => {
+      try {
+        if (!data.text || !data.user) {
+          return socket.emit("error", {
+            message: "Pesan atau user tidak valid!",
+          });
+        }
+
+        const userSocket = [...users.entries()].find(
+          ([, u]) => u.name.toLowerCase() === data.user.toLowerCase()
+        );
+
+        if (!userSocket) {
+          console.log(`⚠️ User ${data.user} tidak ditemukan.`);
+          return;
+        }
+
+        const [userSocketId, userInfo] = userSocket;
+
+        // Ambil semua baris setelah mention
+        const messageText = data.text.split("\n").slice(1).join("\n");
+
+        const formattedMessage = {
+          sender: "CS",
+          text: messageText.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
+          timestamp: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+        };
+
+        console.log("📤 Pesan dari CS ke user:", formattedMessage);
+
+        io.to(userSocketId).emit("receive_message", formattedMessage);
+      } catch (error) {
+        console.error("❌ Gagal mengirim pesan dari CS:", error);
+        socket.emit("error", { message: "Gagal mengirim pesan dari CS!" });
       }
     });
 
