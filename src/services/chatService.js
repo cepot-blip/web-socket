@@ -51,7 +51,7 @@ export const setupChatHandlers = (io) => {
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
             `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<code>${data.text}</code>`,
+            `💬 <b>Pesan:</b>\n<pre>${data.text}</pre>`,
           { parse_mode: "HTML" }
         );
 
@@ -71,15 +71,11 @@ export const setupChatHandlers = (io) => {
           JSON.stringify(formattedMessage, null, 2)
         );
 
-        io.to(user.name).emit(
-          "receive_message",
-          JSON.stringify(formattedMessage),
-          {
-            sender: user.name,
-            text: data.text,
-            timestamp: formattedTime,
-          }
-        );
+        io.to(user.name).emit("receive_message", {
+          sender: user.name,
+          text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
+          timestamp: formattedTime,
+        });
       } catch (error) {
         console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });

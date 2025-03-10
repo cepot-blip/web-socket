@@ -69,7 +69,7 @@ export const handleSocketConnection = (io) => {
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
             `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<code>${data.text}</code>`,
+            `💬 <b>Pesan:</b>\n<pre>${data.text}</pre>`,
           { parse_mode: "HTML" }
         );
 
@@ -99,7 +99,6 @@ export const handleSocketConnection = (io) => {
       }
     });
 
-    // ✅ Perbaikan: Menangani pesan dari CS ke user dengan multiline
     socket.on("cs_send_message", async (data) => {
       try {
         if (!data.text || !data.user) {
@@ -119,9 +118,7 @@ export const handleSocketConnection = (io) => {
 
         const [userSocketId, userInfo] = userSocket;
 
-        // Ambil semua baris setelah mention
-        const messageText = data.text.split("\n").slice(1).join("\n");
-
+        const messageText = data.text.replace(/^@\w+\s*/, "");
         const formattedMessage = {
           sender: "CS",
           text: messageText.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
