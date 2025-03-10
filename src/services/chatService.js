@@ -68,7 +68,7 @@ export const setupChatHandlers = (io) => {
 
         io.to(user.name).emit("receive_message", {
           sender: user.name,
-          text: data.text.replace(/\n/g, "\\n"),
+          text: data.text,
           timestamp: formattedTime,
         });
       } catch (error) {

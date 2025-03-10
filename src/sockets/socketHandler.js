@@ -97,7 +97,7 @@ export const handleSocketConnection = (io) => {
 
         io.to("cs_room").emit("receive_message", {
           sender: user.name,
-          text: data.text.replace(/\n/g, "\\n"),
+          text: data.text,
           timestamp: formattedTime,
         });
       } catch (error) {
