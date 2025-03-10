@@ -40,7 +40,6 @@ export const setupChatHandlers = (io) => {
 
       try {
         if (!CONFIG.CHAT_ID_CS) {
-          console.error("❌ Error: CHAT_ID_CS tidak ditemukan! Cek file .env");
           return socket.emit("error", {
             message: "Server error: Chat ID tidak ditemukan",
           });
@@ -61,11 +60,26 @@ export const setupChatHandlers = (io) => {
           JSON.stringify(data.text)
         );
 
-        io.to(user.name).emit("receive_message", {
+        const formattedMessage = {
           sender: user.name,
-          text: data.text,
+          text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
           timestamp: formattedTime,
-        });
+        };
+
+        console.log(
+          "📤 Mengirim pesan ke CS:",
+          JSON.stringify(formattedMessage, null, 2)
+        );
+
+        io.to(user.name).emit(
+          "receive_message",
+          JSON.stringify(formattedMessage),
+          {
+            sender: user.name,
+            text: data.text,
+            timestamp: formattedTime,
+          }
+        );
       } catch (error) {
         console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
