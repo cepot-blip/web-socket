@@ -63,13 +63,17 @@ export const handleSocketConnection = (io) => {
           });
         }
 
+        const formattedText = data.text
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
           `📩 <b>Pesan Baru dari Pelanggan</b>\n\n` +
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
             `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<pre>${data.text}</pre>`,
+            `💬 <b>Pesan:</b>\n<pre>${formattedText}</pre>`,
           { parse_mode: "HTML" }
         );
 
@@ -83,7 +87,7 @@ export const handleSocketConnection = (io) => {
 
         const formattedMessage = {
           sender: user.name,
-          text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
+          text: formattedText,
           timestamp: formattedTime,
         };
 
@@ -119,9 +123,19 @@ export const handleSocketConnection = (io) => {
         const [userSocketId, userInfo] = userSocket;
 
         const messageText = data.text.replace(/^@\w+\s*/, "");
+        const formattedText = messageText
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n");
+
+        await bot.sendMessage(
+          CONFIG.CHAT_ID_CS,
+          `@${userInfo.name} ${formattedText}`,
+          { parse_mode: "MarkdownV2" }
+        );
+
         const formattedMessage = {
           sender: "CS",
-          text: messageText.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
+          text: formattedText,
           timestamp: new Date().toLocaleTimeString("id-ID", {
             hour: "2-digit",
             minute: "2-digit",
