@@ -124,7 +124,11 @@ export const handleSocketConnection = (io) => {
 
         console.log("🔄 Mencari user:", userSocketId, "Nama:", userInfo.name);
 
-        const messageText = data.text.replace(/^@\w+\s*/, "").trim();
+        const messageText = data.text
+          .replace(/^@\w+\s*/, "")
+          .replace(/\n/g, " ")
+          .trim();
+
         const formattedMessage = {
           sender: "Customer Service",
           text: messageText,
