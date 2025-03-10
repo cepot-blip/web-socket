@@ -51,13 +51,8 @@ export const setupChatHandlers = (io) => {
           `📩 <b>Pesan Baru dari Pelanggan</b>\n\n` +
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
-            `✉️ <b>Email:</b> <code>${
-              user.email || "Tidak tersedia"
-            }</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<code>${data.text.replace(
-              /\n/g,
-              "&#10;"
-            )}</code>`,
+            `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
+            `💬 <b>Pesan:</b>\n<code>${data.text}</code>`,
           { parse_mode: "HTML" }
         );
 

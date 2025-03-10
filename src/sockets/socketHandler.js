@@ -69,16 +69,8 @@ export const handleSocketConnection = (io) => {
             `👤 <b>Nama:</b> <code>${user.name}</code>\n` +
             `📞 <b>Telepon:</b> <code>${user.phone}</code>\n` +
             `✉️ <b>Email:</b> <code>${user.email}</code>\n\n` +
-            `💬 <b>Pesan:</b>\n<code>${data.text.replace(
-              /\n/g,
-              "&#10;"
-            )}</code>`,
+            `💬 <b>Pesan:</b>\n<code>${data.text}</code>`,
           { parse_mode: "HTML" }
-        );
-
-        console.log(
-          "Pesan sebelum dikirim ke Telegram:",
-          JSON.stringify(data.text)
         );
 
         await prisma.message.create({
@@ -87,12 +79,6 @@ export const handleSocketConnection = (io) => {
             content: data.text,
             timestamp: new Date().toISOString(),
           },
-        });
-
-        console.log("📤 Mengirim pesan ke CS:", {
-          sender: user.name,
-          text: JSON.stringify(data.text),
-          timestamp: formattedTime,
         });
 
         io.to("cs_room").emit("receive_message", {
