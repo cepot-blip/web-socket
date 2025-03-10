@@ -7,13 +7,14 @@ const prisma = new PrismaClient();
 
 export const handleSocketConnection = (io) => {
   io.on("connection", (socket) => {
-    socket.on("register_user", async (userData) => {
-      socket.data.user = userData;
-      if (!userData.name || !userData.phone) {
-        return socket.emit("error", { message: "Data user tidak lengkap!" });
-      }
+    console.log(`✅ WebSocket Connected: ${socket.id}`);
 
+    socket.on("register_user", async (userData) => {
       try {
+        if (!userData.name || !userData.phone) {
+          return socket.emit("error", { message: "Data user tidak lengkap!" });
+        }
+
         let user = await prisma.chatUser.findUnique({
           where: { phone: userData.phone },
         });
@@ -32,6 +33,7 @@ export const handleSocketConnection = (io) => {
         socket.join(user.id);
         socket.emit("registered", { success: true, user });
       } catch (error) {
+        console.error("❌ Error saat register:", error);
         socket.emit("error", { message: "Gagal menyimpan user!" });
       }
     });
@@ -41,26 +43,14 @@ export const handleSocketConnection = (io) => {
     });
 
     socket.on("send_message", async (data) => {
-      const user = users.get(socket.id);
-      if (!user) {
-        return socket.emit("error", { message: "User tidak terdaftar!" });
-      }
-      if (!data.text || data.text.trim() === "") {
-        return socket.emit("error", { message: "Pesan tidak boleh kosong!" });
-      }
-
-      const formattedTime = new Date().toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
       try {
-        if (!CONFIG.CHAT_ID_CS) {
-          console.error("❌ Error: CHAT_ID_CS tidak ditemukan! Cek file .env");
-          return socket.emit("error", {
-            message: "Server error: Chat ID tidak ditemukan",
-          });
+        const user = users.get(socket.id);
+        if (!user) {
+          return socket.emit("error", { message: "User tidak terdaftar!" });
+        }
+
+        if (!data.text || data.text.trim() === "") {
+          return socket.emit("error", { message: "Pesan tidak boleh kosong!" });
         }
 
         await bot.sendMessage(
@@ -81,65 +71,27 @@ export const handleSocketConnection = (io) => {
           },
         });
 
-        const formattedMessage = {
+        io.to("cs_room").emit("receive_message", {
           sender: user.name,
           text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
-          timestamp: formattedTime,
-        };
-
-        console.log(
-          "📤 Mengirim pesan ke CS:",
-          JSON.stringify(formattedMessage, null, 2)
-        );
-
-        io.to("cs_room").emit("receive_message", formattedMessage);
+          timestamp: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+        });
       } catch (error) {
         console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
       }
     });
 
-    socket.on("cs_send_message", async (data) => {
-      try {
-        if (!data.text || !data.user) {
-          return socket.emit("error", {
-            message: "Pesan atau user tidak valid!",
-          });
-        }
-
-        const userSocket = [...users.entries()].find(
-          ([, u]) => u.name.toLowerCase() === data.user.toLowerCase()
-        );
-
-        if (!userSocket) {
-          console.log(`⚠️ User ${data.user} tidak ditemukan.`);
-          return;
-        }
-
-        const [userSocketId, userInfo] = userSocket;
-
-        const messageText = data.text.replace(/^@\w+\s*/, "");
-        const formattedMessage = {
-          sender: "CS",
-          text: messageText.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
-          timestamp: new Date().toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }),
-        };
-
-        console.log("📤 Pesan dari CS ke user:", formattedMessage);
-
-        io.to(userSocketId).emit("receive_message", formattedMessage);
-      } catch (error) {
-        console.error("❌ Gagal mengirim pesan dari CS:", error);
-        socket.emit("error", { message: "Gagal mengirim pesan dari CS!" });
-      }
-    });
-
     socket.on("disconnect", () => {
-      console.log("❌ WebSocket Disconnected:", socket.id);
+      console.log(`❌ WebSocket Disconnected: ${socket.id}`);
+      const user = users.get(socket.id);
+      if (user) {
+        socket.leave(user.id);
+      }
       users.delete(socket.id);
     });
   });

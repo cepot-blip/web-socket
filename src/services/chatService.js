@@ -6,39 +6,51 @@ const users = new Map();
 
 export const setupChatHandlers = (io) => {
   io.on("connection", (socket) => {
-    socket.on("register_user", async (userData) => {
-      let user = await getUserByPhone(userData.phone);
-      if (!user) {
-        user = await createUser({
-          name: userData.name.toLowerCase(),
-          phone: userData.phone,
-          email: userData.email || null,
-        });
-      }
+    console.log(`✅ WebSocket Connected: ${socket.id}`);
 
-      socket.data.user = user;
-      users.set(socket.id, user);
-      socket.join(user.name);
-      socket.emit("registered", { success: true, user });
+    socket.on("register_user", async (userData) => {
+      try {
+        if (!userData.name || !userData.phone) {
+          return socket.emit("error", { message: "Data user tidak lengkap!" });
+        }
+
+        let user = await getUserByPhone(userData.phone);
+
+        if (!user) {
+          user = await createUser({
+            name: userData.name.toLowerCase(),
+            phone: userData.phone,
+            email: userData.email || null,
+          });
+        }
+
+        socket.data.user = user;
+        users.set(socket.id, user);
+        socket.join(user.id);
+        socket.emit("registered", { success: true, user });
+      } catch (error) {
+        console.error("❌ Error saat register:", error);
+        socket.emit("error", { message: "Gagal mendaftarkan user!" });
+      }
     });
 
     socket.on("send_message", async (data) => {
-      const user = users.get(socket.id);
-      if (!user) {
-        return socket.emit("error", { message: "User tidak terdaftar!" });
-      }
-
-      if (!data.text || data.text.trim() === "") {
-        return socket.emit("error", { message: "Pesan tidak boleh kosong!" });
-      }
-
-      const formattedTime = new Date().toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
       try {
+        const user = users.get(socket.id);
+        if (!user) {
+          return socket.emit("error", { message: "User tidak terdaftar!" });
+        }
+
+        if (!data.text || data.text.trim() === "") {
+          return socket.emit("error", { message: "Pesan tidak boleh kosong!" });
+        }
+
+        const formattedTime = new Date().toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
         if (!CONFIG.CHAT_ID_CS) {
           return socket.emit("error", {
             message: "Server error: Chat ID tidak ditemukan",
@@ -55,23 +67,7 @@ export const setupChatHandlers = (io) => {
           { parse_mode: "HTML" }
         );
 
-        console.log(
-          "Pesan sebelum dikirim ke Telegram:",
-          JSON.stringify(data.text)
-        );
-
-        const formattedMessage = {
-          sender: user.name,
-          text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
-          timestamp: formattedTime,
-        };
-
-        console.log(
-          "📤 Mengirim pesan ke CS:",
-          JSON.stringify(formattedMessage, null, 2)
-        );
-
-        io.to(user.name).emit("receive_message", {
+        io.to(user.id).emit("receive_message", {
           sender: user.name,
           text: data.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n"),
           timestamp: formattedTime,
@@ -83,21 +79,25 @@ export const setupChatHandlers = (io) => {
     });
 
     socket.on("chat_ended", () => {
-      console.log(
-        `🔴 Chat diakhiri untuk ${socket.data?.user?.name || "Unknown User"}`
-      );
+      const user = socket.data.user;
+      if (user) {
+        console.log(`🔴 Chat diakhiri untuk ${user.name}`);
+        io.to(user.id).emit("chat_ended", {
+          message: "🔴 Chat telah diakhiri oleh CS.",
+        });
 
-      io.to(socket.data.user?.name).emit("chat_ended", {
-        message: "🔴 Chat telah diakhiri oleh CS.",
-      });
-
-      setTimeout(() => {
-        socket.disconnect();
-      }, 1000);
+        setTimeout(() => {
+          socket.disconnect();
+        }, 1000);
+      }
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ WebSocket Disconnected:", socket.id);
+      console.log(`❌ WebSocket Disconnected: ${socket.id}`);
+      const user = users.get(socket.id);
+      if (user) {
+        socket.leave(user.id);
+      }
       users.delete(socket.id);
     });
   });
