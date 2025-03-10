@@ -45,7 +45,8 @@ export const setupChatHandlers = (io) => {
           });
         }
 
-        const originalText = data.text;
+        // **Mengatasi newline jadi spasi agar tidak terpotong**
+        const originalText = data.text.replace(/\n/g, " ").trim();
 
         await bot.sendMessage(
           CONFIG.CHAT_ID_CS,
@@ -61,7 +62,7 @@ export const setupChatHandlers = (io) => {
 
         const formattedMessage = {
           sender: user.name,
-          text: originalText, // Simpan tanpa modifikasi
+          text: originalText,
           timestamp: formattedTime,
         };
 
