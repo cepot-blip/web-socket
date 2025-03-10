@@ -87,13 +87,20 @@ export const handleSocketConnection = (io) => {
           timestamp: formattedTime,
         };
 
-        console.log("📤 Mengirim pesan ke CS:", JSON.stringify(formattedMessage, null, 2));
+        console.log(
+          "📤 Mengirim pesan ke CS:",
+          JSON.stringify(formattedMessage, null, 2)
+        );
 
-        io.to("cs_room").emit("receive_message", formattedMessage, {
-          sender: user.name,
-          text: data.text,
-          timestamp: formattedTime,
-        });
+        io.to("cs_room").emit(
+          "receive_message",
+          JSON.stringify(formattedMessage),
+          {
+            sender: user.name,
+            text: data.text,
+            timestamp: formattedTime,
+          }
+        );
       } catch (error) {
         console.error("❌ Gagal mengirim pesan:", error);
         socket.emit("error", { message: "Gagal mengirim pesan!" });
