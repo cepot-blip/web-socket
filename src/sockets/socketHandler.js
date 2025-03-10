@@ -87,7 +87,7 @@ export const handleSocketConnection = (io) => {
 
         const formattedMessage = {
           sender: user.name,
-          text: formattedText,
+          text: originalText.replace(/\n/g, "<br>"),
           timestamp: formattedTime,
         };
 

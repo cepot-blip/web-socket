@@ -1,10 +1,11 @@
 import { bot } from "../config/telegramConfig.js";
 import { CONFIG } from "../config/envConfig.js";
 import { io } from "../config/socketConfig.js";
+
 const activeChats = new Map();
 
 bot.on("message", async (msg) => {
-  console.log("\uD83D\uDCEC Pesan masuk dari Telegram:", msg);
+  console.log("📩 Pesan masuk dari Telegram:", msg);
 
   const chatId = msg.chat?.id;
   if (!chatId) {
@@ -12,8 +13,8 @@ bot.on("message", async (msg) => {
     return;
   }
 
-  console.log("\uD83D\uDCEC Chat ID dari pesan:", chatId);
-  console.log("\uD83D\uDCEC Chat ID CS dari config:", CONFIG.CHAT_ID_CS);
+  console.log("📩 Chat ID dari pesan:", chatId);
+  console.log("📩 Chat ID CS dari config:", CONFIG.CHAT_ID_CS);
 
   if (parseInt(chatId) !== parseInt(CONFIG.CHAT_ID_CS)) {
     console.log("⛔ Pesan bukan dari chat CS, diabaikan!");
@@ -29,7 +30,8 @@ bot.on("message", async (msg) => {
   console.log("✅ Teks pesan:", text);
 
   if (text.startsWith("/endchat")) {
-    const match = text.match(/^\/endchat\s+@([\w\s]+)$/);
+    const match = text.match(/^@([\w\s]+?)\s*$/);
+
     if (!match || !match[1]) {
       bot.sendMessage(
         CONFIG.CHAT_ID_CS,
@@ -49,12 +51,8 @@ bot.on("message", async (msg) => {
     }
 
     const socketId = activeChats.get(userName);
-    if (!io || !io.sockets || !io.sockets.sockets) {
-      console.error("❌ ERROR: WebSocket IO tidak tersedia!");
-      return;
-    }
-
     const socket = io.sockets.sockets.get(socketId);
+
     if (socket) {
       io.to(socketId).emit("chat_ended", {
         message: "🔴 Chat telah diakhiri oleh CS.",
@@ -76,7 +74,7 @@ bot.on("message", async (msg) => {
     return;
   }
 
-  const match = text.match(/^@([\w\s]+?)\s+(.+)/);
+  const match = text.match(/^@([\w\s]+?)\s+([\s\S]+)/);
   if (!match || !match[1] || !match[2]) {
     bot.sendMessage(
       CONFIG.CHAT_ID_CS,
@@ -87,16 +85,9 @@ bot.on("message", async (msg) => {
 
   const userName = match[1].trim().toLowerCase();
   const messageContent = match[2];
-
-  if (!io || !io.sockets || !io.sockets.sockets) {
-    console.error("❌ ERROR: WebSocket IO tidak tersedia!");
-    bot.sendMessage(CONFIG.CHAT_ID_CS, "❌ ERROR: WebSocket tidak tersedia!");
-    return;
-  }
-
   let userFound = false;
 
-  for (const socket of Array.from(io.sockets.sockets.values())) {
+  for (const socket of io.sockets.sockets.values()) {
     console.log(
       "🔍 Memeriksa socket:",
       socket.id,
@@ -113,9 +104,10 @@ bot.on("message", async (msg) => {
       userName
     );
     if (user.name.toLowerCase() === userName) {
+      const formattedMessage = messageContent.replace(/\n/g, "<br>");
       io.to(socket.id).emit("receive_message", {
         sender: "Customer Service",
-        text: messageContent,
+        text: formattedMessage,
         timestamp: new Date().toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",

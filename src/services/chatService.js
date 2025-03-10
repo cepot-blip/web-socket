@@ -45,7 +45,6 @@ export const setupChatHandlers = (io) => {
           });
         }
 
-        // **Mengatasi newline jadi spasi agar tidak terpotong**
         const originalText = data.text.replace(/\n/g, " ").trim();
 
         await bot.sendMessage(
@@ -62,7 +61,7 @@ export const setupChatHandlers = (io) => {
 
         const formattedMessage = {
           sender: user.name,
-          text: originalText,
+          text: originalText.replace(/\n/g, "<br>"),
           timestamp: formattedTime,
         };
 
